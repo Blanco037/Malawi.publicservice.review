@@ -9,6 +9,28 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 </head>
 <body>
+  <!-- Load Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<!-- Initialize Firebase -->
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCrtLIfGZPMMGcP9RllftmkT__HwdfARxE",
+    authDomain: "malawi-servicereviews.firebaseapp.com",
+    projectId: "malawi-servicereviews",
+    storageBucket: "malawi-servicereviews.appspot.com",
+    messagingSenderId: "126836382784",
+    appId: "1:126836382784:web:e36794088f2b16479493a5"
+  };
+  firebase.initializeApp(firebaseConfig);
+</script>
+  <!-- Firebase FIRST -->
+<script src="firebase-CDN-links.js"></script>
+<script>firebase.initializeApp(...);</script>
+
+<!-- Your code SECOND -->
+<script src="script.js"></script>
   <div class="container">
     <h2>Rate a Public Service in Malawi</h2>
     <select id="service">
