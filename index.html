@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Malawi Service Reviews</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h2>Rate a Public Service in Malawi</h2>
+    <select id="service">
+      <option>Healthcare</option>
+      <option>Education</option>
+      <option>Transport</option>
+    </select>
+    <select id="rating">
+      <option value="1">★☆☆☆☆ (Poor)</option>
+      <option value="3">★★★☆☆ (Average)</option>
+      <option value="5">★★★★★ (Excellent)</option>
+    </select>
+    <button onclick="submitReview()">Submit Review</button>
+    <p id="confirmation"></p>
+  </div>
+  <script src="script.js"></script>
+</body>
+  </html>
