@@ -1,24 +1,46 @@
+// ===== AUTHENTICATION ===== //
+function quickLogin() {
+  const email = document.getElementById("auth-email").value || "test@example.com";
+  const password = document.getElementById("auth-password").value || "password123";
+
+  // Try login, fallback to signup
+  firebase.auth().signInWithEmailAndPassword(email, password)
+    .catch(() => {
+      firebase.auth().createUserWithEmailAndPassword(email, password)
+        .then(() => alert("Account created automatically!"))
+        .catch((error) => alert("Error: " + error.message));
+    });
+}
+
+// Show/hide UI based on auth state
+firebase.auth().onAuthStateChanged((user) => {
+  if (user) {
+    document.getElementById("auth-ui").style.display = "none";
+    document.getElementById("review-form").style.display = "block";
+    document.getElementById("confirmation").innerHTML = "Logged in as: " + user.email;
+  }
+});
+
+// ===== REVIEW SUBMISSION ===== //
 function submitReview() {
-  // Get form values
+  if (!firebase.auth().currentUser) {
+    alert("Please log in first!");
+    return;
+  }
+
+  const db = firebase.firestore();
   const service = document.getElementById("service").value;
   const rating = document.getElementById("rating").value;
 
-  // Debug: Show captured values (mobile-friendly alert)
-  alert("Trying to submit:\nService: " + service + "\nRating: " + rating);
-
-  // Firebase submission
-  const db = firebase.firestore();
   db.collection("reviews").add({
     service: service,
     rating: rating,
+    user: firebase.auth().currentUser.email, // Track who submitted
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  })
-  .then(() => {
-    alert("✅ Success! Review saved to Firestore.");
+  }).then(() => {
     document.getElementById("confirmation").innerHTML = "✓ Review saved!";
-  })
-  .catch((error) => {
-    alert("❌ Firebase Error:\n" + error.message + "\n\nCheck console for details.");
-    console.error("Firestore error:", error);
+  }).catch((error) => {
+    console.error("Error writing document: ", error);
+    alert("Failed to save: " + error.message);
   });
 }
