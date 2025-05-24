@@ -8,7 +8,7 @@ body {
   line-height: 1.6;
 }
 
-/* ===== CARD CONTAINERS ===== */
+/* ===== CARD STYLES ===== */
 .card {
   background: white;
   padding: 20px;
@@ -39,18 +39,23 @@ button:hover {
   background-color: #003399;
 }
 
-/* ===== USSD SIMULATION ===== */
-#ussd-demo {
+/* ===== AUTH UI ===== */
+#auth-ui button {
+  margin-top: 15px;
+}
+
+/* ===== USSD INTERFACE ===== */
+#ussd-interface {
   font-family: 'Courier New', monospace;
 }
 
 #ussd-response {
   background: #000;
-  color: #0f0; /* Classic USSD green */
+  color: #0f0;
   padding: 15px;
   border-radius: 4px;
   margin: 10px 0;
-  white-space: pre-wrap; /* Preserves line breaks */
+  white-space: pre-wrap;
   line-height: 1.5;
 }
 
@@ -58,8 +63,8 @@ button:hover {
   font-family: 'Courier New', monospace;
 }
 
-/* ===== TOGGLE BUTTON ===== */
-#toggle-interface {
+/* ===== TOGGLE BUTTONS ===== */
+#switch-mode, .switch-btn {
   background-color: #666;
   display: block;
   margin: 20px auto;
@@ -67,7 +72,12 @@ button:hover {
   padding: 10px 20px;
 }
 
-/* ===== CONFIRMATION MESSAGE ===== */
+.logout-btn {
+  background-color: #d9534f !important; /* Red for logout */
+  margin-top: 15px;
+}
+
+/* ===== CONFIRMATION MESSAGES ===== */
 #confirmation {
   color: #002366;
   font-weight: bold;
@@ -77,17 +87,16 @@ button:hover {
 
 /* ===== RESPONSIVE ADJUSTMENTS ===== */
 @media (max-width: 480px) {
-  #ussd-response {
-    font-size: 14px;
-    padding: 10px;
+  .card {
+    padding: 15px;
   }
   
   select, button, input {
     padding: 10px;
-    font-size: 14px;
   }
   
-  .card {
-    padding: 15px;
+  #ussd-response {
+    font-size: 14px;
+    padding: 10px;
   }
-  }
+}
