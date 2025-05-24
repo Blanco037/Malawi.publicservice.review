@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Malawi Service Reviews</title>
+  <title>Malawi Service Reviews (USSD Demo)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <!-- Firebase SDKs -->
@@ -9,23 +9,31 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <style>
-    /* Added logout button styling */
-    #logout-btn {
-      background: #f44336;
-      color: white;
-      border: none;
-      padding: 8px 15px;
-      margin-top: 10px;
-      border-radius: 4px;
-      cursor: pointer;
+    /* USSD Simulation Styling */
+    #ussd-demo {
+      font-family: monospace;
+      background: #f5f5f5;
+      border: 2px solid #333;
+      border-radius: 5px;
+      padding: 15px;
+      margin: 20px 0;
     }
-    #logout-btn:hover {
-      background: #d32f2f;
+    #ussd-response {
+      white-space: pre-wrap;
+      background: #000;
+      color: #0f0;
+      padding: 10px;
+      border-radius: 3px;
+    }
+    #ussd-input {
+      font-family: monospace;
+      padding: 8px;
+      width: 80%;
     }
   </style>
 </head>
 <body>
-  <!-- Firebase Initialization -->
+  <!-- Firebase Init -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCrtLIfGZPMMGcP9RllftmkT__HwdfARxE",
@@ -38,18 +46,21 @@
     firebase.initializeApp(firebaseConfig);
   </script>
 
-  <!-- Login UI -->
-  <div id="auth-ui" style="text-align: center; margin: 20px;">
-    <h3>Login to Submit Reviews</h3>
-    <input type="email" id="auth-email" placeholder="test@example.com" style="padding: 8px; margin: 5px;">
-    <input type="password" id="auth-password" placeholder="password123" style="padding: 8px; margin: 5px;">
-    <button onclick="quickLogin()" style="padding: 8px 15px; margin: 5px;">Login/Signup</button>
+  <!-- USSD Simulation -->
+  <div id="ussd-demo">
+    <h2>USSD Service Rating Demo</h2>
+    <p>Pretend you dialed: <strong>*384*1234#</strong></p>
+    <div id="ussd-menu">
+      <p id="ussd-response">CON Welcome to Malawi Services\n1. Rate Service\n2. View Ratings</p>
+      <input type="text" id="ussd-input" placeholder="Enter choice (1 or 2)">
+      <button onclick="handleUSSD()">SEND</button>
+    </div>
   </div>
 
-  <!-- Review Form (Hidden Until Login) -->
-  <div id="review-form" style="display: none;">
+  <!-- Web Form (Hidden by Default) -->
+  <div id="web-form" style="display:none;">
     <div class="container">
-      <h2>Rate a Public Service in Malawi</h2>
+      <h2>Web Rating Interface</h2>
       <select id="service">
         <option>Healthcare</option>
         <option>Education</option>
@@ -60,13 +71,11 @@
         <option value="3">★★★☆☆ (Average)</option>
         <option value="5">★★★★★ (Excellent)</option>
       </select>
-      <button onclick="submitReview()">Submit Review</button>
+      <button onclick="submitReview()">Submit</button>
       <p id="confirmation"></p>
-      <button id="logout-btn" onclick="logout()">Logout</button>
     </div>
   </div>
 
-  <!-- Scripts -->
   <script src="script.js"></script>
 </body>
 </html>
