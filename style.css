@@ -28,7 +28,7 @@ select, button, input {
 }
 
 button {
-  background-color: #002366; /* Malawi blue */
+  background-color: #002366;
   color: white;
   font-weight: bold;
   cursor: pointer;
@@ -37,11 +37,6 @@ button {
 
 button:hover {
   background-color: #003399;
-}
-
-/* ===== AUTH UI ===== */
-#auth-ui button {
-  margin-top: 15px;
 }
 
 /* ===== USSD INTERFACE ===== */
@@ -59,10 +54,6 @@ button:hover {
   line-height: 1.5;
 }
 
-#ussd-input {
-  font-family: 'Courier New', monospace;
-}
-
 /* ===== TOGGLE BUTTONS ===== */
 #switch-mode, .switch-btn {
   background-color: #666;
@@ -73,30 +64,16 @@ button:hover {
 }
 
 .logout-btn {
-  background-color: #d9534f !important; /* Red for logout */
+  background-color: #d9534f !important;
   margin-top: 15px;
 }
 
-/* ===== CONFIRMATION MESSAGES ===== */
-#confirmation {
-  color: #002366;
-  font-weight: bold;
-  text-align: center;
-  margin-top: 15px;
-}
-
-/* ===== RESPONSIVE ADJUSTMENTS ===== */
+/* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 480px) {
   .card {
     padding: 15px;
   }
-  
   select, button, input {
-    padding: 10px;
-  }
-  
-  #ussd-response {
-    font-size: 14px;
     padding: 10px;
   }
 }
