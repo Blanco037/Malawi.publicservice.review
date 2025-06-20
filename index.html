@@ -3,16 +3,20 @@
 <head>
   <title>Malawi Service Reviews</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: Arial; max-width: 500px; margin: 0 auto; padding: 20px; }
+    .card { background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+    select, button { width: 100%; padding: 10px; margin: 8px 0; display: block; }
+    button { background: #002366; color: white; border: none; }
+    #test-button { background: red; position: fixed; bottom: 10px; right: 10px; }
+  </style>
   
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-</head>
-<body>
-  <!-- Firebase Init -->
+  
   <script>
+    // CONFIG - VERIFY THESE MATCH YOUR FIREBASE PROJECT
     const firebaseConfig = {
       apiKey: "AIzaSyCrtLIfGZPMMGcP9RllftmkT__HwdfARxE",
       authDomain: "malawi-servicereviews.firebaseapp.com",
@@ -22,48 +26,48 @@
       appId: "1:126836382784:web:e36794088f2b16479493a5"
     };
     firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // TEST FUNCTION - CHECKS FIRESTORE CONNECTION
+    function testFirestore() {
+      db.collection("connection_test").add({
+        test: "Android check",
+        timestamp: new Date()
+      }).then(() => alert("Firestore working! Check console"))
+        .catch(e => alert("Error: " + e.message));
+    }
+
+    // SIMPLIFIED REVIEW SUBMISSION
+    function submitReview() {
+      db.collection("reviews").add({
+        service: document.getElementById("service").value,
+        rating: parseInt(document.getElementById("rating").value),
+        timestamp: new Date()
+      }).then(() => alert("Review saved!"))
+        .catch(e => alert("Save failed: " + e.message));
+    }
   </script>
-
-  <!-- Main Interface -->
-  <div id="web-interface">
-    <div id="auth-ui" class="card">
-      <h2>Service Review Portal</h2>
-      <input type="email" id="auth-email" placeholder="Email">
-      <input type="password" id="auth-password" placeholder="Password">
-      <button onclick="handleLogin()">Login</button>
-      <button onclick="handleSignup()">Sign Up</button>
-    </div>
-
-    <div id="review-form" class="card" style="display:none;">
-      <h2>Rate a Public Service</h2>
-      <select id="service">
-        <option>Healthcare</option>
-        <option>Education</option>
-        <option>Transport</option>
-      </select>
-      <select id="rating">
-        <option value="1">★☆☆☆☆ (Poor)</option>
-        <option value="3">★★★☆☆ (Average)</option>
-        <option value="5">★★★★★ (Excellent)</option>
-      </select>
-      <button onclick="submitReview()">Submit Review</button>
-      <p id="confirmation"></p>
-      <button onclick="logout()" class="logout-btn">Logout</button>
-    </div>
+</head>
+<body>
+  <div class="card">
+    <h2>Rate a Service</h2>
+    <select id="service">
+      <option>Healthcare</option>
+      <option>Education</option>
+    </select>
+    <select id="rating">
+      <option value="1">★☆☆☆☆</option>
+      <option value="5">★★★★★</option>
+    </select>
+    <button onclick="submitReview()">Submit</button>
   </div>
 
-  <!-- USSD Simulator -->
-  <div id="ussd-interface" class="card" style="display:none;">
-    <h2>USSD Simulator (*384*1234#)</h2>
-    <div id="ussd-response">CON Welcome to Malawi Services\n1. Rate Service\n2. View Ratings</div>
-    <input type="text" id="ussd-input" placeholder="Enter choice">
-    <button onclick="handleUSSD()">SEND</button>
-    <button onclick="switchToWeb()" class="switch-btn">Back to Web</button>
-  </div>
+  <!-- Debug Button -->
+  <button id="test-button" onclick="testFirestore()">TEST CONNECTION</button>
 
-  <!-- Toggle Button -->
-  <button id="switch-mode" onclick="toggleInterface()">Switch to USSD Simulator</button>
-
-  <script src="script.js"></script>
+  <!-- Auto-log for debugging -->
+  <script>
+    console.log("Firebase initialized. Project:", firebase.app().options.projectId);
+  </script>
 </body>
 </html>
