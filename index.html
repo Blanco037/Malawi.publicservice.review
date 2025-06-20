@@ -33,17 +33,17 @@
       cursor: pointer;
     }
     #test-button {
-      background-color: green;
+      background-color: #28a745;
       position: fixed;
       bottom: 20px;
       right: 20px;
       width: auto;
     }
-    #confirmation {
-      color: #002366;
+    #status {
+      color: #dc3545;
       font-weight: bold;
       text-align: center;
-      margin-top: 15px;
+      margin: 15px 0;
     }
   </style>
   
@@ -53,7 +53,7 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
   
   <script>
-    // CONFIG - REPLACE WITH YOURS (from Firebase Project Settings)
+    // CONFIG - VERIFY THESE MATCH YOUR FIREBASE PROJECT
     const firebaseConfig = {
       apiKey: "AIzaSyCrtLIfGZPMMGcP9RllftmkT__HwdfARxE",
       authDomain: "malawi-servicereviews.firebaseapp.com",
@@ -67,29 +67,41 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // AUTO-LOGIN (SOLVES PERMISSION ERRORS)
-    firebase.auth().signInAnonymously()
-      .then(() => {
-        console.log("Automatic anonymous login successful");
-        document.getElementById("confirmation").textContent = "Connected to database";
-      })
-      .catch(error => {
-        console.error("Auto-login failed:", error);
-        document.getElementById("confirmation").textContent = "Connection error - refresh page";
-      });
-
-    // TEST FIRESTORE CONNECTION
-    function testConnection() {
-      db.collection("connection_tests").add({
-        timestamp: new Date(),
-        device: "Android Chrome",
-        test: "This verifies Firestore is working"
-      })
-      .then(() => alert("✅ Test successful!\nCheck Firebase Console → Firestore"))
-      .catch(error => alert("🚨 Error: " + error.message));
+    // ENHANCED AUTO-LOGIN WITH ERROR HANDLING
+    function initializeFirebase() {
+      firebase.auth().signInAnonymously()
+        .then(() => {
+          console.log("Anonymous login successful");
+          document.getElementById("status").textContent = "✅ Database connected";
+          document.getElementById("status").style.color = "#28a745";
+          
+          // Verify permissions
+          testConnection(true);
+        })
+        .catch(error => {
+          console.error("Login failed:", error);
+          document.getElementById("status").innerHTML = 
+            `❌ Connection error: ${error.message}<br>Refresh page or check console`;
+        });
     }
 
-    // SUBMIT REVIEW
+    // TEST CONNECTION (silent = don't show alerts)
+    function testConnection(silent = false) {
+      db.collection("connection_tests").add({
+        timestamp: new Date(),
+        test: "Firestore permission check"
+      })
+      .then(() => {
+        if (!silent) alert("🔥 Firestore is working perfectly!\nCheck your Firebase console");
+      })
+      .catch(error => {
+        document.getElementById("status").innerHTML = 
+          `❌ Permissions error: ${error.message}<br>Update Firestore rules!`;
+        if (!silent) alert(`🚨 CRITICAL ERROR: ${error.message}\n\n1. Go to Firebase Console → Firestore → Rules\n2. Replace all rules with:\n\nallow read, write: if true;\n3. Click PUBLISH`);
+      });
+    }
+
+    // SUBMIT REVIEW WITH ERROR DETAILS
     function submitReview() {
       db.collection("reviews").add({
         service: document.getElementById("service").value,
@@ -97,14 +109,17 @@
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
       })
       .then(() => {
-        document.getElementById("confirmation").innerHTML = 
-          '<span style="color: green;">✓ Review submitted successfully!</span>';
+        document.getElementById("status").innerHTML = 
+          '<span style="color: #28a745;">✓ Review saved successfully!</span>';
       })
       .catch(error => {
-        document.getElementById("confirmation").innerHTML = 
-          '<span style="color: red;">Error: ' + error.message + '</span>';
+        document.getElementById("status").innerHTML = 
+          `<span style="color: #dc3545;">Save failed: ${error.message}<br>${error.code}</span>`;
       });
     }
+
+    // Initialize on page load
+    window.onload = initializeFirebase;
   </script>
 </head>
 <body>
@@ -121,16 +136,16 @@
       <option value="5">★★★★★ (Excellent)</option>
     </select>
     <button onclick="submitReview()">Submit Review</button>
-    <p id="confirmation"></p>
+    <p id="status">Connecting to database...</p>
   </div>
 
-  <!-- Connection Test Button -->
-  <button id="test-button" onclick="testConnection()">TEST DATABASE CONNECTION</button>
+  <!-- Test Button -->
+  <button id="test-button" onclick="testConnection()">TEST PERMISSIONS</button>
 
   <!-- Debug Info -->
   <script>
-    console.log("Active Firebase project:", firebase.app().options.projectId);
-    console.log("Current user:", firebase.auth().currentUser);
+    console.log("Firebase Project:", firebase.app().options.projectId);
+    console.log("Firebase User:", firebase.auth().currentUser);
   </script>
 </body>
 </html>
