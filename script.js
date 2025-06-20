@@ -1,12 +1,10 @@
-// ===== AUTHENTICATION ===== //
+// ===== FIREBASE AUTH ===== //
 function handleLogin() {
   const email = document.getElementById("auth-email").value;
   const password = document.getElementById("auth-password").value;
 
   firebase.auth().signInWithEmailAndPassword(email, password)
-    .catch((error) => {
-      alert("Login error: " + error.message);
-    });
+    .catch(error => alert("Login error: " + error.message));
 }
 
 function handleSignup() {
@@ -14,20 +12,17 @@ function handleSignup() {
   const password = document.getElementById("auth-password").value;
 
   firebase.auth().createUserWithEmailAndPassword(email, password)
-    .catch((error) => {
-      alert("Signup error: " + error.message);
-    });
+    .catch(error => alert("Signup error: " + error.message));
 }
 
 function logout() {
   firebase.auth().signOut();
 }
 
-// Auth state listener
-firebase.auth().onAuthStateChanged((user) => {
+firebase.auth().onAuthStateChanged(user => {
   const authUI = document.getElementById("auth-ui");
   const reviewForm = document.getElementById("review-form");
-
+  
   if (user) {
     authUI.style.display = "none";
     reviewForm.style.display = "block";
@@ -38,31 +33,30 @@ firebase.auth().onAuthStateChanged((user) => {
   }
 });
 
-// ===== REVIEW SUBMISSION ===== //
+// ===== FIREBASE FIRESTORE ===== //
 function submitReview() {
-  const db = firebase.firestore();
-  const service = document.getElementById("service").value;
-  const rating = document.getElementById("rating").value;
+  const user = firebase.auth().currentUser;
+  if (!user) return alert("Please login first!");
 
-  db.collection("reviews").add({
-    service: service,
-    rating: parseInt(rating),
-    user: firebase.auth().currentUser.email,
+  firebase.firestore().collection("reviews").add({
+    service: document.getElementById("service").value,
+    rating: parseInt(document.getElementById("rating").value),
+    user: user.email,
     source: "web",
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   }).then(() => {
-    document.getElementById("confirmation").textContent = "✓ Review submitted!";
-  });
+    document.getElementById("confirmation").innerHTML = 
+      '<span style="color: green;">✓ Review submitted!</span>';
+  }).catch(error => alert("Error: " + error.message));
 }
 
-// ===== USSD SIMULATION ===== //
+// ===== USSD SIMULATOR ===== //
 let ussdState = 0;
 let selectedService = "";
 
 function handleUSSD() {
   const input = document.getElementById("ussd-input").value.trim();
   const responseDiv = document.getElementById("ussd-response");
-  
   document.getElementById("ussd-input").value = "";
 
   switch(ussdState) {
@@ -70,11 +64,9 @@ function handleUSSD() {
       if (input === "1") {
         responseDiv.textContent = "CON Select service:\n1. Healthcare\n2. Education\n3. Transport";
         ussdState = 1;
-      } 
-      else if (input === "2") {
+      } else if (input === "2") {
         fetchRatings();
-      }
-      else {
+      } else {
         responseDiv.textContent = "END Invalid choice";
       }
       break;
@@ -85,8 +77,7 @@ function handleUSSD() {
         selectedService = services[parseInt(input)-1];
         responseDiv.textContent = `CON Rate ${selectedService}:\n1. ★☆☆☆☆ (Poor)\n2. ★★★☆☆ (Average)\n3. ★★★★★ (Excellent)`;
         ussdState = 2;
-      }
-      else {
+      } else {
         responseDiv.textContent = "END Invalid service";
         ussdState = 0;
       }
@@ -98,8 +89,7 @@ function handleUSSD() {
         submitUSSDReview(selectedService, rating);
         responseDiv.textContent = `END Thank you for rating ${selectedService}!`;
         ussdState = 0;
-      }
-      else {
+      } else {
         responseDiv.textContent = "END Invalid rating";
         ussdState = 0;
       }
@@ -113,7 +103,7 @@ function submitUSSDReview(service, rating) {
     rating: rating,
     source: "ussd",
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  });
+  }).catch(error => console.error("USSD submit error:", error));
 }
 
 function fetchRatings() {
@@ -121,13 +111,16 @@ function fetchRatings() {
     .orderBy("timestamp", "desc")
     .limit(3)
     .get()
-    .then((snapshot) => {
+    .then(snapshot => {
       let response = "END Recent Ratings:\n";
       snapshot.docs.forEach(doc => {
         const data = doc.data();
-        response += `${data.service}: ${'★'.repeat(data.rating)}\n`;
+        response += `${data.service}: ${'★'.repeat(data.rating)}${'☆'.repeat(5-data.rating)}\n`;
       });
       document.getElementById("ussd-response").textContent = response;
+    })
+    .catch(error => {
+      document.getElementById("ussd-response").textContent = "END Error loading ratings";
     });
 }
 
@@ -142,4 +135,4 @@ function switchToWeb() {
   document.getElementById("ussd-interface").style.display = "none";
   document.getElementById("web-interface").style.display = "block";
   document.getElementById("switch-mode").style.display = "block";
-                          }
+}
