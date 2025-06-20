@@ -4,6 +4,7 @@
   <title>Malawi Service Reviews</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
+  
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
@@ -23,9 +24,8 @@
     firebase.initializeApp(firebaseConfig);
   </script>
 
-  <!-- Main Web Interface (Default View) -->
+  <!-- Main Interface -->
   <div id="web-interface">
-    <!-- Login Form -->
     <div id="auth-ui" class="card">
       <h2>Service Review Portal</h2>
       <input type="email" id="auth-email" placeholder="Email">
@@ -34,7 +34,6 @@
       <button onclick="handleSignup()">Sign Up</button>
     </div>
 
-    <!-- Review Form (Hidden until login) -->
     <div id="review-form" class="card" style="display:none;">
       <h2>Rate a Public Service</h2>
       <select id="service">
@@ -53,19 +52,16 @@
     </div>
   </div>
 
-  <!-- USSD Simulator (Hidden by Default) -->
+  <!-- USSD Simulator -->
   <div id="ussd-interface" class="card" style="display:none;">
-    <h2>USSD Service Rating Simulator</h2>
-    <p>Simulate dialing: <strong>*384*1234#</strong></p>
-    <div id="ussd-menu">
-      <div id="ussd-response">CON Welcome to Malawi Services\n1. Rate Service\n2. View Ratings</div>
-      <input type="text" id="ussd-input" placeholder="Enter choice (1 or 2)">
-      <button onclick="handleUSSD()">SEND</button>
-    </div>
-    <button onclick="switchToWeb()" class="switch-btn">Back to Web Interface</button>
+    <h2>USSD Simulator (*384*1234#)</h2>
+    <div id="ussd-response">CON Welcome to Malawi Services\n1. Rate Service\n2. View Ratings</div>
+    <input type="text" id="ussd-input" placeholder="Enter choice">
+    <button onclick="handleUSSD()">SEND</button>
+    <button onclick="switchToWeb()" class="switch-btn">Back to Web</button>
   </div>
 
-  <!-- Interface Toggle Button -->
+  <!-- Toggle Button -->
   <button id="switch-mode" onclick="toggleInterface()">Switch to USSD Simulator</button>
 
   <script src="script.js"></script>
