@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>USSD Simulator - Public Service Review</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background-color: #111;
+      color: #0f0;
+      font-family: monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    #ussd-screen {
+      width: 300px;
+      height: 400px;
+      border: 2px solid #0f0;
+      padding: 15px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      margin-bottom: 10px;
+      background-color: #000;
+    }
+    input, button {
+      font-family: monospace;
+      width: 300px;
+      padding: 8px;
+      margin-top: 5px;
+    }
+    button {
+      background-color: #0f0;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>USSD Simulator</h2>
+  <div id="ussd-screen">Dial *123# to begin</div>
+  <input type="text" id="user-input" placeholder="Enter here..." />
+  <button onclick="handleUSSD()">Send</button>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+  <script>
+    // ✅ Your Firebase Configuration (copied from your project)
+    const firebaseConfig = {
+      apiKey: "AIzaSyAQ4hPNx0PGKEa7jzgZ0Z-Kc778Xf3i1Jk",
+      authDomain: "malawi-service-reviews-v2.firebaseapp.com",
+      projectId: "malawi-service-reviews-v2",
+      storageBucket: "malawi-service-reviews-v2.firebasestorage.app",
+      messagingSenderId: "869924093544",
+      appId: "1:869924093544:web:86efe93e5c28de332bc5dd"
+    };
+
+    // ✅ Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // USSD Logic
+    let step = 0;
+    let category = '';
+    let review = '';
+
+    const screen = document.getElementById('ussd-screen');
+    const input = document.getElementById('user-input');
+
+    function handleUSSD() {
+      const value = input.value.trim();
+      input.value = '';
+
+      if (step === 0) {
+        if (value === '*123#') {
+          screen.textContent = '1. Rate Health\n2. Rate Education\n3. Rate Police\n4. Rate Water';
+          step = 1;
+        } else {
+          screen.textContent = 'Invalid code. Please dial *123# to begin.';
+        }
+      } else if (step === 1) {
+        switch (value) {
+          case '1': category = 'Health'; break;
+          case '2': category = 'Education'; break;
+          case '3': category = 'Police'; break;
+          case '4': category = 'Water'; break;
+          default:
+            screen.textContent = 'Invalid choice. Try again.\n1. Rate Health\n2. Rate Education\n3. Rate Police\n4. Rate Water';
+            return;
+        }
+        screen.textContent = `Enter your review for ${category}:`;
+        step = 2;
+      } else if (step === 2) {
+        review = value;
+        screen.textContent = 'Submitting your review...';
+
+        // ✅ Save to Firestore
+        db.collection("ussdReviews").add({
+          category: category,
+          review: review,
+          timestamp: new Date()
+        }).then(() => {
+          screen.textContent = 'Thank you! Your feedback has been submitted.';
+          step = 0;
+        }).catch(error => {
+          screen.textContent = 'Error saving review. Try again.';
+          console.error("Error writing document: ", error);
+        });
+      }
+    }
+  </script>
+</body>
+  </html>
