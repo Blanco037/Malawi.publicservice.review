@@ -32,12 +32,9 @@
       font-weight: bold;
       cursor: pointer;
     }
-    #test-button {
-      background-color: #28a745;
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: auto;
+    #logout-button {
+      background-color: #ff4444;
+      margin-top: 10px;
     }
     #status {
       color: #dc3545;
@@ -45,12 +42,25 @@
       text-align: center;
       margin: 15px 0;
     }
+    .toggle-link {
+      text-align: center;
+      cursor: pointer;
+      color: #007bff;
+      font-size: 14px;
+      margin-top: 10px;
+    }
   </style>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
     import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAQ4hPNx0PGKEa7jzgZ0Z-Kc778Xf3i1Jk",
@@ -65,71 +75,144 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // Listen for login status
+    // Auth state change handler
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        document.getElementById("login-section").style.display = "none";
+        document.getElementById("auth-section").style.display = "none";
         document.getElementById("review-section").style.display = "block";
-        document.getElementById("status").textContent = "✅ Logged in as " + user.email;
+        document.getElementById("logout-button").style.display = "block";
+        document.getElementById("status").textContent = `✅ Logged in as ${user.email}`;
         document.getElementById("status").style.color = "#28a745";
       } else {
-        document.getElementById("login-section").style.display = "block";
+        document.getElementById("auth-section").style.display = "block";
         document.getElementById("review-section").style.display = "none";
-        document.getElementById("status").textContent = "Please log in to submit a review.";
+        document.getElementById("logout-button").style.display = "none";
+        document.getElementById("status").textContent = "Please log in or sign up to submit a review.";
+        document.getElementById("status").style.color = "#dc3545";
       }
     });
 
-    // Handle login
+    // Login
     window.login = function () {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+      const email = document.getElementById("login-email").value;
+      const password = document.getElementById("login-password").value;
       signInWithEmailAndPassword(auth, email, password)
         .then(() => {
           document.getElementById("status").textContent = "✅ Login successful!";
-          document.getElementById("status").style.color = "#28a745";
         })
         .catch((error) => {
           document.getElementById("status").textContent = "❌ " + error.message;
-          document.getElementById("status").style.color = "#dc3545";
         });
     };
 
-    // Submit review
+    // Signup
+    window.signup = function () {
+      const email = document.getElementById("signup-email").value;
+      const password = document.getElementById("signup-password").value;
+      createUserWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          document.getElementById("status").textContent = "✅ Sign-up successful!";
+        })
+        .catch((error) => {
+          document.getElementById("status").textContent = "❌ " + error.message;
+        });
+    };
+
+    // Logout
+    window.logout = function () {
+      signOut(auth).then(() => {
+        document.getElementById("status").textContent = "🔒 Logged out.";
+      });
+    };
+
+    // Dynamic subcategory update
+    window.updateSubcategories = function () {
+      const service = document.getElementById("service").value;
+      const subSelect = document.getElementById("subcategory");
+
+      subSelect.innerHTML = ""; // Clear previous
+
+      let options = [];
+      if (["Healthcare", "Education", "Transport"].includes(service)) {
+        options = ["Public", "Private"];
+      } else if (service === "Restaurants") {
+        options = ["KFC", "McDonald's"];
+      } else if (service === "Government Institutions") {
+        options = ["DC’s Office", "Post Office"];
+      }
+
+      options.forEach(opt => {
+        const option = document.createElement("option");
+        option.textContent = opt;
+        subSelect.appendChild(option);
+      });
+
+      subSelect.style.display = options.length ? "block" : "none";
+    };
+
+    // Submit Review
     window.submitReview = async function () {
       try {
         const service = document.getElementById("service").value;
+        const subcategory = document.getElementById("subcategory").value;
         const rating = parseInt(document.getElementById("rating").value);
+
         await addDoc(collection(db, "reviews"), {
-          service,
+          category: service,
+          subcategory,
           rating,
           timestamp: serverTimestamp()
         });
+
         document.getElementById("status").innerHTML = '<span style="color: #28a745;">✓ Review saved!</span>';
       } catch (error) {
-        console.error("Error saving review:", error);
         document.getElementById("status").innerHTML = `<span style="color: #dc3545;">Error: ${error.message}</span>`;
       }
+    };
+
+    // Toggle login/signup form
+    window.toggleAuth = function () {
+      const loginForm = document.getElementById("login-form");
+      const signupForm = document.getElementById("signup-form");
+      loginForm.style.display = loginForm.style.display === "none" ? "block" : "none";
+      signupForm.style.display = signupForm.style.display === "none" ? "block" : "none";
     };
   </script>
 </head>
 
 <body>
-  <!-- Login Section -->
-  <div class="card" id="login-section" style="display: none;">
-    <h2>Login to Review</h2>
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Password">
-    <button onclick="login()">Login</button>
+  <!-- Auth Section -->
+  <div id="auth-section" class="card">
+    <div id="login-form">
+      <h2>Login</h2>
+      <input type="email" id="login-email" placeholder="Email">
+      <input type="password" id="login-password" placeholder="Password">
+      <button onclick="login()">Login</button>
+    </div>
+
+    <div id="signup-form" style="display:none;">
+      <h2>Sign Up</h2>
+      <input type="email" id="signup-email" placeholder="Email">
+      <input type="password" id="signup-password" placeholder="Password">
+      <button onclick="signup()">Sign Up</button>
+    </div>
+
+    <div class="toggle-link" onclick="toggleAuth()">Switch to Sign Up / Login</div>
   </div>
 
-  <!-- Review Form Section -->
-  <div class="card" id="review-section" style="display: none;">
+  <!-- Review Section -->
+  <div id="review-section" class="card" style="display: none;">
     <h2>Rate a Public Service</h2>
-    <select id="service">
+    <select id="service" onchange="updateSubcategories()">
+      <option disabled selected>Select Service</option>
       <option>Healthcare</option>
       <option>Education</option>
       <option>Transport</option>
+      <option>Restaurants</option>
+      <option>Government Institutions</option>
     </select>
+    <select id="subcategory" style="display:none;"></select>
+
     <select id="rating">
       <option value="1">★☆☆☆☆ (Poor)</option>
       <option value="3">★★★☆☆ (Average)</option>
@@ -138,7 +221,8 @@
     <button onclick="submitReview()">Submit Review</button>
   </div>
 
-  <!-- Status Message -->
+  <!-- Status Message + Logout -->
   <p id="status">Connecting...</p>
+  <button id="logout-button" onclick="logout()" style="display:none;">Logout</button>
 </body>
-        </html>
+  </html>
