@@ -18,7 +18,7 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       margin-bottom: 20px;
     }
-    select, button {
+    input, select, button {
       width: 100%;
       padding: 12px;
       margin: 10px 0;
@@ -47,14 +47,11 @@
     }
   </style>
 
-  <!-- Firebase v9+ Modular SDK Integration -->
   <script type="module">
-    // Import Firebase SDKs
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
     import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
 
-    // Your Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAQ4hPNx0PGKEa7jzgZ0Z-Kc778Xf3i1Jk",
       authDomain: "malawi-service-reviews-v2.firebaseapp.com",
@@ -64,59 +61,69 @@
       appId: "1:869924093544:web:86efe93e5c28de332bc5dd"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // Sign in anonymously
-    signInAnonymously(auth)
-      .then(() => {
-        document.getElementById("status").textContent = "✅ Connected to Firebase";
+    // Listen for login status
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById("login-section").style.display = "none";
+        document.getElementById("review-section").style.display = "block";
+        document.getElementById("status").textContent = "✅ Logged in as " + user.email;
         document.getElementById("status").style.color = "#28a745";
-      })
-      .catch((error) => {
-        console.error("Login failed:", error);
-        document.getElementById("status").textContent = "❌ Login error: " + error.message;
-        document.getElementById("status").style.color = "#dc3545";
-      });
+      } else {
+        document.getElementById("login-section").style.display = "block";
+        document.getElementById("review-section").style.display = "none";
+        document.getElementById("status").textContent = "Please log in to submit a review.";
+      }
+    });
+
+    // Handle login
+    window.login = function () {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          document.getElementById("status").textContent = "✅ Login successful!";
+          document.getElementById("status").style.color = "#28a745";
+        })
+        .catch((error) => {
+          document.getElementById("status").textContent = "❌ " + error.message;
+          document.getElementById("status").style.color = "#dc3545";
+        });
+    };
 
     // Submit review
     window.submitReview = async function () {
       try {
         const service = document.getElementById("service").value;
         const rating = parseInt(document.getElementById("rating").value);
-
         await addDoc(collection(db, "reviews"), {
           service,
           rating,
           timestamp: serverTimestamp()
         });
-
         document.getElementById("status").innerHTML = '<span style="color: #28a745;">✓ Review saved!</span>';
       } catch (error) {
         console.error("Error saving review:", error);
         document.getElementById("status").innerHTML = `<span style="color: #dc3545;">Error: ${error.message}</span>`;
       }
     };
-
-    // Test Firestore connection
-    window.testConnection = async function () {
-      try {
-        await addDoc(collection(db, "connection_tests"), {
-          timestamp: new Date(),
-          test: "Permission check"
-        });
-        alert("🔥 Firestore is working!\nCheck your Firebase console.");
-      } catch (error) {
-        alert(`🚨 CRITICAL: ${error.message}`);
-      }
-    };
   </script>
 </head>
 
 <body>
-  <div class="card">
+  <!-- Login Section -->
+  <div class="card" id="login-section" style="display: none;">
+    <h2>Login to Review</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
+
+  <!-- Review Form Section -->
+  <div class="card" id="review-section" style="display: none;">
     <h2>Rate a Public Service</h2>
     <select id="service">
       <option>Healthcare</option>
@@ -129,10 +136,9 @@
       <option value="5">★★★★★ (Excellent)</option>
     </select>
     <button onclick="submitReview()">Submit Review</button>
-    <p id="status">Connecting to database...</p>
   </div>
 
-  <!-- Test Button -->
-  <button id="test-button" onclick="testConnection()">TEST PERMISSIONS</button>
+  <!-- Status Message -->
+  <p id="status">Connecting...</p>
 </body>
-</html>
+        </html>
