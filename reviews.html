@@ -91,7 +91,7 @@
       });
 
       renderReviews(allReviews);
-      calculateAveragesAndDrawChart();
+      setTimeout(calculateAveragesAndDrawChart, 500); // delay to ensure canvas is ready
     }
 
     function renderReviews(reviews) {
@@ -124,10 +124,24 @@
         categoryCounts[entry.category]++;
       });
 
-      const categories = Object.keys(categoryRatings);
-      const avgRatings = categories.map(cat => (categoryRatings[cat] / categoryCounts[cat]).toFixed(2));
+      const categories = [];
+      const avgRatings = [];
 
-      const ctx = document.getElementById('ratingChart').getContext('2d');
+      for (const category in categoryRatings) {
+        const count = categoryCounts[category];
+        if (count > 0) {
+          categories.push(category);
+          avgRatings.push((categoryRatings[category] / count).toFixed(2));
+        }
+      }
+
+      const canvas = document.getElementById('ratingChart');
+      if (!canvas) {
+        console.warn("Chart canvas not found");
+        return;
+      }
+
+      const ctx = canvas.getContext('2d');
       new Chart(ctx, {
         type: 'bar',
         data: {
