@@ -46,75 +46,75 @@
       margin: 15px 0;
     }
   </style>
-  
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  
-  <script>
-    // CONFIG - MUST MATCH YOUR FIREBASE PROJECT
+
+  <!-- Firebase v9+ Modular SDK Integration -->
+  <script type="module">
+    // Import Firebase SDKs
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+
+    // Your Firebase config
     const firebaseConfig = {
-      apiKey: "AIzaSyCrtLIfGZPMMGcP9RllftmkT__HwdfARxE",
-      authDomain: "malawi-servicereviews.firebaseapp.com",
-      projectId: "malawi-servicereviews",
-      storageBucket: "malawi-servicereviews.appspot.com",
-      messagingSenderId: "126836382784",
-      appId: "1:126836382784:web:e36794088f2b16479493a5"
+      apiKey: "AIzaSyAQ4hPNx0PGKEa7jzgZ0Z-Kc778Xf3i1Jk",
+      authDomain: "malawi-service-reviews-v2.firebaseapp.com",
+      projectId: "malawi-service-reviews-v2",
+      storageBucket: "malawi-service-reviews-v2.firebasestorage.app",
+      messagingSenderId: "869924093544",
+      appId: "1:869924093544:web:86efe93e5c28de332bc5dd"
     };
 
     // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
 
-    // ENHANCED AUTO-LOGIN
-    function initializeFirebase() {
-      firebase.auth().signInAnonymously()
-        .then(() => {
-          console.log("Login success");
-          document.getElementById("status").textContent = "✅ Database connected";
-          document.getElementById("status").style.color = "#28a745";
-        })
-        .catch(error => {
-          console.error("Login failed:", error);
-          document.getElementById("status").innerHTML = 
-            `❌ Login error: ${error.message}<br>Refresh page`;
-        });
-    }
-
-    // TEST CONNECTION
-    function testConnection() {
-      db.collection("connection_tests").add({
-        timestamp: new Date(),
-        test: "Permission check"
-      })
-      .then(() => alert("🔥 Firestore is working!\nCheck your Firebase console"))
-      .catch(error => {
-        alert(`🚨 CRITICAL: ${error.message}\n\n1. Open Firebase Console\n2. Go to Firestore → Rules\n3. Replace ALL with:\n\nallow read, write: if true;\n4. Click PUBLISH`);
-      });
-    }
-
-    // SUBMIT REVIEW
-    function submitReview() {
-      db.collection("reviews").add({
-        service: document.getElementById("service").value,
-        rating: parseInt(document.getElementById("rating").value),
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      })
+    // Sign in anonymously
+    signInAnonymously(auth)
       .then(() => {
-        document.getElementById("status").innerHTML = 
-          '<span style="color: #28a745;">✓ Review saved!</span>';
+        document.getElementById("status").textContent = "✅ Connected to Firebase";
+        document.getElementById("status").style.color = "#28a745";
       })
-      .catch(error => {
-        document.getElementById("status").innerHTML = 
-          `<span style="color: #dc3545;">Error: ${error.message}</span>`;
+      .catch((error) => {
+        console.error("Login failed:", error);
+        document.getElementById("status").textContent = "❌ Login error: " + error.message;
+        document.getElementById("status").style.color = "#dc3545";
       });
-    }
 
-    // Initialize on load
-    window.onload = initializeFirebase;
+    // Submit review
+    window.submitReview = async function () {
+      try {
+        const service = document.getElementById("service").value;
+        const rating = parseInt(document.getElementById("rating").value);
+
+        await addDoc(collection(db, "reviews"), {
+          service,
+          rating,
+          timestamp: serverTimestamp()
+        });
+
+        document.getElementById("status").innerHTML = '<span style="color: #28a745;">✓ Review saved!</span>';
+      } catch (error) {
+        console.error("Error saving review:", error);
+        document.getElementById("status").innerHTML = `<span style="color: #dc3545;">Error: ${error.message}</span>`;
+      }
+    };
+
+    // Test Firestore connection
+    window.testConnection = async function () {
+      try {
+        await addDoc(collection(db, "connection_tests"), {
+          timestamp: new Date(),
+          test: "Permission check"
+        });
+        alert("🔥 Firestore is working!\nCheck your Firebase console.");
+      } catch (error) {
+        alert(`🚨 CRITICAL: ${error.message}`);
+      }
+    };
   </script>
 </head>
+
 <body>
   <div class="card">
     <h2>Rate a Public Service</h2>
