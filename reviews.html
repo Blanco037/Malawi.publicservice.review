@@ -15,11 +15,16 @@
       text-align: center;
       color: #002366;
     }
+    select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0 20px;
+      font-size: 16px;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
       background: white;
-      margin-top: 20px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     th, td {
@@ -60,36 +65,69 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Load reviews
+    let allReviews = [];
+
     async function loadReviews() {
       const q = query(collection(db, "reviews"), orderBy("timestamp", "desc"));
       const snapshot = await getDocs(q);
-      const table = document.getElementById("review-table");
+      allReviews = [];
 
       snapshot.forEach(doc => {
         const data = doc.data();
+        allReviews.push({
+          category: data.category || "N/A",
+          subcategory: data.subcategory || "-",
+          rating: data.rating || 0,
+          time: data.timestamp?.toDate().toLocaleString() || "Unknown"
+        });
+      });
+
+      renderReviews(allReviews);
+    }
+
+    function renderReviews(reviews) {
+      const table = document.getElementById("review-table");
+      table.innerHTML = "";
+
+      reviews.forEach(entry => {
         const tr = document.createElement("tr");
-
-        const category = data.category || "N/A";
-        const sub = data.subcategory || "-";
-        const stars = "★".repeat(data.rating || 0);
-        const time = data.timestamp?.toDate().toLocaleString() || "Unknown";
-
+        const stars = "★".repeat(entry.rating);
         tr.innerHTML = `
-          <td>${category}</td>
-          <td>${sub}</td>
+          <td>${entry.category}</td>
+          <td>${entry.subcategory}</td>
           <td class="stars">${stars}</td>
-          <td class="small">${time}</td>
+          <td class="small">${entry.time}</td>
         `;
         table.appendChild(tr);
       });
     }
+
+    window.filterReviews = function () {
+      const filter = document.getElementById("filter-category").value;
+      if (filter === "All") {
+        renderReviews(allReviews);
+      } else {
+        const filtered = allReviews.filter(r => r.category === filter);
+        renderReviews(filtered);
+      }
+    };
 
     window.onload = loadReviews;
   </script>
 </head>
 <body>
   <h1>🇲🇼 Malawi Public Service Reviews</h1>
+
+  <label for="filter-category">Filter by Service:</label>
+  <select id="filter-category" onchange="filterReviews()">
+    <option value="All">Show All</option>
+    <option value="Healthcare">Healthcare</option>
+    <option value="Education">Education</option>
+    <option value="Transport">Transport</option>
+    <option value="Restaurants">Restaurants</option>
+    <option value="Government Institutions">Government Institutions</option>
+  </select>
+
   <table>
     <thead>
       <tr>
@@ -104,4 +142,4 @@
     </tbody>
   </table>
 </body>
-  </html>
+</html>
