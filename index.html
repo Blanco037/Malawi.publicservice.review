@@ -18,7 +18,7 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       margin-bottom: 20px;
     }
-    input, select, button {
+    select, button {
       width: 100%;
       padding: 12px;
       margin: 10px 0;
@@ -32,9 +32,12 @@
       font-weight: bold;
       cursor: pointer;
     }
-    #logout-button {
-      background-color: #ff4444;
-      margin-top: 10px;
+    #test-button {
+      background-color: #28a745;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: auto;
     }
     #status {
       color: #dc3545;
@@ -42,26 +45,18 @@
       text-align: center;
       margin: 15px 0;
     }
-    .toggle-link {
-      text-align: center;
-      cursor: pointer;
-      color: #007bff;
-      font-size: 14px;
-      margin-top: 10px;
+    #logout {
+      background-color: #dc3545;
+      margin-bottom: 15px;
     }
   </style>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
-    import {
-      getAuth,
-      signInWithEmailAndPassword,
-      createUserWithEmailAndPassword,
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAQ4hPNx0PGKEa7jzgZ0Z-Kc778Xf3i1Jk",
       authDomain: "malawi-service-reviews-v2.firebaseapp.com",
@@ -71,158 +66,87 @@
       appId: "1:869924093544:web:86efe93e5c28de332bc5dd"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    // Auth state change handler
-    onAuthStateChanged(auth, (user) => {
+    firebase.auth().onAuthStateChanged(user => {
       if (user) {
-        document.getElementById("auth-section").style.display = "none";
-        document.getElementById("review-section").style.display = "block";
-        document.getElementById("logout-button").style.display = "block";
-        document.getElementById("status").textContent = `✅ Logged in as ${user.email}`;
-        document.getElementById("status").style.color = "#28a745";
+        document.getElementById("status").textContent = "✅ Logged in";
       } else {
-        document.getElementById("auth-section").style.display = "block";
-        document.getElementById("review-section").style.display = "none";
-        document.getElementById("logout-button").style.display = "none";
-        document.getElementById("status").textContent = "Please log in or sign up to submit a review.";
-        document.getElementById("status").style.color = "#dc3545";
+        window.location.href = "login.html";
       }
     });
 
-    // Login
-    window.login = function () {
-      const email = document.getElementById("login-email").value;
-      const password = document.getElementById("login-password").value;
-      signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          document.getElementById("status").textContent = "✅ Login successful!";
-        })
-        .catch((error) => {
-          document.getElementById("status").textContent = "❌ " + error.message;
-        });
-    };
-
-    // Signup
-    window.signup = function () {
-      const email = document.getElementById("signup-email").value;
-      const password = document.getElementById("signup-password").value;
-      createUserWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          document.getElementById("status").textContent = "✅ Sign-up successful!";
-        })
-        .catch((error) => {
-          document.getElementById("status").textContent = "❌ " + error.message;
-        });
-    };
-
-    // Logout
-    window.logout = function () {
-      signOut(auth).then(() => {
-        document.getElementById("status").textContent = "🔒 Logged out.";
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "login.html";
       });
-    };
+    }
 
-    // Dynamic subcategory update
-    window.updateSubcategories = function () {
-      const service = document.getElementById("service").value;
-      const subSelect = document.getElementById("subcategory");
-
-      subSelect.innerHTML = ""; // Clear previous
-
-      let options = [];
-      if (["Healthcare", "Education", "Transport"].includes(service)) {
-        options = ["Public", "Private"];
-      } else if (service === "Restaurants") {
-        options = ["KFC", "McDonald's"];
-      } else if (service === "Government Institutions") {
-        options = ["DC’s Office", "Post Office"];
-      }
-
-      options.forEach(opt => {
-        const option = document.createElement("option");
-        option.textContent = opt;
-        subSelect.appendChild(option);
+    function testConnection() {
+      db.collection("connection_tests").add({
+        timestamp: new Date(),
+        test: "Permission check"
+      })
+      .then(() => alert("🔥 Firestore is working!"))
+      .catch(error => {
+        alert(`🚨 Firestore Error: ${error.message}`);
       });
+    }
 
-      subSelect.style.display = options.length ? "block" : "none";
-    };
+    function submitReview() {
+      db.collection("reviews").add({
+        category: document.getElementById("service").value,
+        subcategory: document.getElementById("type").value,
+        rating: parseInt(document.getElementById("rating").value),
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      })
+      .then(() => {
+        document.getElementById("status").innerHTML = 
+          '<span style="color: #28a745;">✓ Review saved!</span>';
+      })
+      .catch(error => {
+        document.getElementById("status").innerHTML = 
+          `<span style="color: #dc3545;">Error: ${error.message}</span>`;
+      });
+    }
 
-    // Submit Review
-    window.submitReview = async function () {
-      try {
-        const service = document.getElementById("service").value;
-        const subcategory = document.getElementById("subcategory").value;
-        const rating = parseInt(document.getElementById("rating").value);
-
-        await addDoc(collection(db, "reviews"), {
-          category: service,
-          subcategory,
-          rating,
-          timestamp: serverTimestamp()
-        });
-
-        document.getElementById("status").innerHTML = '<span style="color: #28a745;">✓ Review saved!</span>';
-      } catch (error) {
-        document.getElementById("status").innerHTML = `<span style="color: #dc3545;">Error: ${error.message}</span>`;
-      }
-    };
-
-    // Toggle login/signup form
-    window.toggleAuth = function () {
-      const loginForm = document.getElementById("login-form");
-      const signupForm = document.getElementById("signup-form");
-      loginForm.style.display = loginForm.style.display === "none" ? "block" : "none";
-      signupForm.style.display = signupForm.style.display === "none" ? "block" : "none";
+    window.onload = () => {
+      firebase.auth().onAuthStateChanged(user => {
+        if (!user) window.location.href = "login.html";
+      });
     };
   </script>
 </head>
-
 <body>
-  <!-- Auth Section -->
-  <div id="auth-section" class="card">
-    <div id="login-form">
-      <h2>Login</h2>
-      <input type="email" id="login-email" placeholder="Email">
-      <input type="password" id="login-password" placeholder="Password">
-      <button onclick="login()">Login</button>
-    </div>
+  <button id="logout" onclick="logout()">Logout</button>
 
-    <div id="signup-form" style="display:none;">
-      <h2>Sign Up</h2>
-      <input type="email" id="signup-email" placeholder="Email">
-      <input type="password" id="signup-password" placeholder="Password">
-      <button onclick="signup()">Sign Up</button>
-    </div>
-
-    <div class="toggle-link" onclick="toggleAuth()">Switch to Sign Up / Login</div>
-  </div>
-
-  <!-- Review Section -->
-  <div id="review-section" class="card" style="display: none;">
+  <div class="card">
     <h2>Rate a Public Service</h2>
-    <select id="service" onchange="updateSubcategories()">
-      <option disabled selected>Select Service</option>
-      <option>Healthcare</option>
-      <option>Education</option>
-      <option>Transport</option>
-      <option>Restaurants</option>
-      <option>Government Institutions</option>
+
+    <select id="service">
+      <option value="Healthcare">Healthcare</option>
+      <option value="Education">Education</option>
+      <option value="Transport">Transport</option>
+      <option value="Restaurants">Restaurants</option>
+      <option value="Government Institutions">Government Institutions</option>
     </select>
-    <select id="subcategory" style="display:none;"></select>
+
+    <select id="type">
+      <option value="Public">Public</option>
+      <option value="Private">Private</option>
+    </select>
 
     <select id="rating">
       <option value="1">★☆☆☆☆ (Poor)</option>
       <option value="3">★★★☆☆ (Average)</option>
       <option value="5">★★★★★ (Excellent)</option>
     </select>
+
     <button onclick="submitReview()">Submit Review</button>
+    <p id="status">Checking login...</p>
   </div>
 
-  <!-- Status Message + Logout -->
-  <p id="status">Connecting...</p>
-  <button id="logout-button" onclick="logout()" style="display:none;">Logout</button>
+  <button id="test-button" onclick="testConnection()">TEST FIRESTORE</button>
 </body>
-  </html>
+</html>
