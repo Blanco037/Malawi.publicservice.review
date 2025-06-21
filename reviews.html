@@ -15,11 +15,19 @@
       text-align: center;
       color: #002366;
     }
-    select {
+    select, button {
       width: 100%;
       padding: 10px;
       margin: 10px 0 20px;
       font-size: 16px;
+    }
+    button {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
     }
     table {
       width: 100%;
@@ -57,11 +65,12 @@
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
-
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAQ4hPNx0PGKEa7jzgZ0Z-Kc778Xf3i1Jk",
       authDomain: "malawi-service-reviews-v2.firebaseapp.com",
@@ -71,13 +80,27 @@
       appId: "1:869924093544:web:86efe93e5c28de332bc5dd"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "login.html";
+      } else {
+        loadReviews();
+      }
+    });
+
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "login.html";
+      });
+    }
+
     let allReviews = [];
 
     async function loadReviews() {
-      const q = query(collection(db, "reviews"), orderBy("timestamp", "desc"));
-      const snapshot = await getDocs(q);
+      const snapshot = await db.collection("reviews").orderBy("timestamp", "desc").get();
       allReviews = [];
 
       snapshot.forEach(doc => {
@@ -91,7 +114,7 @@
       });
 
       renderReviews(allReviews);
-      setTimeout(calculateAveragesAndDrawChart, 500); // delay to ensure canvas is ready
+      setTimeout(drawChart, 300);
     }
 
     function renderReviews(reviews) {
@@ -111,7 +134,17 @@
       });
     }
 
-    function calculateAveragesAndDrawChart() {
+    function filterReviews() {
+      const filter = document.getElementById("filter-category").value;
+      if (filter === "All") {
+        renderReviews(allReviews);
+      } else {
+        const filtered = allReviews.filter(r => r.category === filter);
+        renderReviews(filtered);
+      }
+    }
+
+    function drawChart() {
       const categoryRatings = {};
       const categoryCounts = {};
 
@@ -136,10 +169,7 @@
       }
 
       const canvas = document.getElementById('ratingChart');
-      if (!canvas) {
-        console.warn("Chart canvas not found");
-        return;
-      }
+      if (!canvas) return;
 
       const ctx = canvas.getContext('2d');
       new Chart(ctx, {
@@ -162,22 +192,12 @@
         }
       });
     }
-
-    window.filterReviews = function () {
-      const filter = document.getElementById("filter-category").value;
-      if (filter === "All") {
-        renderReviews(allReviews);
-      } else {
-        const filtered = allReviews.filter(r => r.category === filter);
-        renderReviews(filtered);
-      }
-    };
-
-    window.onload = loadReviews;
   </script>
 </head>
 <body>
   <h1>🇲🇼 Malawi Public Service Reviews</h1>
+
+  <button onclick="logout()">Logout</button>
 
   <label for="filter-category">Filter by Service:</label>
   <select id="filter-category" onchange="filterReviews()">
@@ -189,10 +209,8 @@
     <option value="Government Institutions">Government Institutions</option>
   </select>
 
-  <!-- Chart -->
   <canvas id="ratingChart" height="120"></canvas>
 
-  <!-- Table -->
   <table>
     <thead>
       <tr>
@@ -203,7 +221,7 @@
       </tr>
     </thead>
     <tbody id="review-table">
-      <!-- Filled dynamically -->
+      <!-- Data goes here -->
     </tbody>
   </table>
 </body>
